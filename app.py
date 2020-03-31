@@ -1,11 +1,11 @@
 from flask import Flask, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+from config import Config
+from models import db, Enrollment, Event, Location, Participant 
 
 app = Flask(__name__)
-app.secret_key = 'Enikeev-project4-secret-phrase'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///enikeev_project4.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+app.config.from_object(Config)
+db.init_app(app)
 
 
 @app.route('/locations/', methods=['GET'])
