@@ -1,3 +1,5 @@
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 from flask import Flask, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
@@ -7,6 +9,10 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+admin = Admin(app)
+admin.add_view(ModelView(Event, db.session))
+admin.add_view(ModelView(Location, db.session))
+admin.add_view(ModelView(Enrollment, db.session))
 
 @app.route('/locations/', methods=['GET'])
 def locations_list():
