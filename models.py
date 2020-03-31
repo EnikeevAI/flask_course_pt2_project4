@@ -1,12 +1,21 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from config import Config
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///enikeev_project4.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.from_object(Config)
 db = SQLAlchemy(app)
+#db.init_app(app)
 
+
+class Enrollment(db.Model):
+    __tablename__ = 'enrollments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    datetime = db.Column(db.String(30), nullable=False)
+    event = db.relationship('Event')
+    participant = db.relationship('Participant')
 
 class Event(db.Model):
     __tablename__ = 'events'
@@ -16,17 +25,42 @@ class Event(db.Model):
     description = db.Column(db.String(500), nullable=False)
     date = db.Column(db.String(20), nullable=False)
     time = db.Column(db.String(10), nullable=False)
-    type = db.Column(db.String(10), nullable=False)
-    category = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(30), nullable=False)
     seats = db.Column(db.Integer, nullable=False)
     participants = db.relationship('Participant')
 
+    category_id = db.Column(db.Integer, db.ForeignKey("events_categories.id"))
+    category = db.relationship('EventCategory')
+
     enrollment_id = db.Column(db.Integer, db.ForeignKey("enrollments.id"))
-    enrollments = db.relationship('Enrollment')
+    enrollment = db.relationship('Enrollment')
 
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     location = db.relationship('Location')
+
+    type_event_id = db.Column(db.Integer, db.ForeignKey('events_types.id'))
+    type_event = db.relationship('EventType')
+
+class EventCategory(db.Model):
+    __tablename__ = 'events_categories'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(50), nullable=False)
+    code = db.Column(db.String(20), nullable=False)
+    events = db.relationship('Event')
+
+class EventType(db.Model):
+    __tablename__ = 'events_types'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(50), nullable=False)
+    code = db.Column(db.String(20), nullable=False)
+    events = db.relationship('Event')
+
+class Location(db.Model):
+    __tablename__ = 'locations'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(50), nullable=False)
+    code = db.Column(db.String(20), nullable=False)
+    events = db.relationship('Event')
 
 class Participant(db.Model):
     __tablename__ = 'participants'
@@ -56,21 +90,7 @@ class Participant(db.Model):
     def password_valid(self, password):
         return check_password_hash(self.password_hash, password)
 
-class Enrollment(db.Model):
-    __tablename__ = 'enrollments'
-
-    id = db.Column(db.Integer, primary_key=True)
-    datetime = db.Column(db.String(30), nullable=False)
-    event = db.relationship('Event')
-    participant = db.relationship('Participant')
-
-class Location(db.Model):
-    __tablename__ = 'locations'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(50), nullable=False)
-    code = db.Column(db.String(20), nullable=False)
-    events = db.relationship('Event')
-
 
 if __name__ == '__main__':
     db.create_all()
+    
