@@ -22,15 +22,12 @@ def locations_list():
 
 @app.route('/events/', methods=['GET'])
 def events_list():
-    data = request.json
     eventtype = request.args.get('eventtype')
-    print(data)
     eventtype = db.session.query(EventType).filter_by(code=eventtype).one_or_none()
     location = request.args.get('location')
     location = db.session.query(Location).filter_by(code=location).one_or_none()
     events_schema = EventSchema(many=True)
     events = db.session.query(Event)
-    print(eventtype, location)
     if eventtype and location: 
         events = events.filter(
             Event.location == location, Event.type_event == eventtype)
@@ -47,7 +44,27 @@ def enrollments_processing(event_id):
 
 @app.route('/register/', methods=['POST'])
 def register_user():
-    return jsonify({"status":"ok","id":1})
+    data = request.json
+    user = db.session.query(Participant).filter_by(
+        email=data.get('email')).one_or_none()
+    if user:
+        return jsonify({'error':'Already exists'})
+    new_user_schema = ParticipantSchema()
+    new_user = Participant(
+        name=data.get('name'),
+        email=data.get('email'),
+        picture=data.get('picture'),
+        location=data.get('location'),
+        about=data.get('about') 
+    )
+    new_user.password = data.get('password')
+    db.session.add(new_user)
+    try:
+        db.session.commit()
+    except:
+        return jsonify(), 500
+    print(jsonify(new_user_schema.dump(new_user)))
+    return jsonify(new_user_schema.dump(new_user)), 201, {'Location': f'/login/{new_user.id}'}
 
 @app.route('/auth/', methods=['POST'])
 def auth_user():
