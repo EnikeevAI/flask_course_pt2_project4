@@ -1,3 +1,4 @@
+import datetime
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask import Flask, jsonify, render_template, request, session
@@ -40,7 +41,47 @@ def events_list():
 
 @app.route('/enrollments/<int:event_id>', methods=['DELETE', 'POST'])
 def enrollments_processing(event_id):
-    return jsonify({"status":"success"})
+    user_id = session.get('user_id', None)
+    today = datetime.datetime.today()
+    date=today.strftime("%Y-%m-%d-%H:%M")
+    if user_id == None:
+        return {'error': 'User authorization failed'}, 400
+    enrollments = db.session.query(Enrollment)
+    event = db.session.query(Event).get(event_id)
+    user = db.session.query(Participant).get(user_id)
+    enrollment_with_user = enrollments.filter_by(
+            event=event, participant=user).one_or_none()
+    if request.method == 'POST':
+        enrollments = enrollments.filter_by(event=event).all()
+        if enrollment_with_user:
+            return {"error":"The user is already registered"}, 400
+        if len(enrollments) < event.seats:
+            new_enrollment_schema = EnrollmentSchema()
+            new_enrollment = Enrollment(
+                datetime=date,
+                event = event,
+                participant=user
+                )
+            db.session.add(new_enrollment)
+            db.session.commit()
+            try:
+                db.session.commit()
+            except:
+                return jsonify(), 500
+            return jsonify(new_enrollment_schema.dump(new_enrollment)), 201, \
+              {'Location': f'/enrollments/{new_enrollment.id}'}
+        else:
+            return {"error":"Not enough seats"}, 400
+    elif request.method == 'DELETE':
+        if enrollment_with_user:
+            db.session.delete(enrollment_with_user)
+            try:
+                db.session.commit()
+            except:
+                return jsonify(), 500
+            return  204
+        else:
+            return jsonify(), 204
 
 @app.route('/register/', methods=['POST'])
 def register_user():
@@ -98,3 +139,4 @@ def page_not_found(error):
 
 if __name__ == '__main__':
     app.run()
+    

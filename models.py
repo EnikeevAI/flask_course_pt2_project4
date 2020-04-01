@@ -14,7 +14,11 @@ class Enrollment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     datetime = db.Column(db.String(30), nullable=False)
+
+    event_id = db.Column(db.Integer, db.ForeignKey("events.id"))
     event = db.relationship('Event')
+
+    participant_id = db.Column(db.Integer, db.ForeignKey("participants.id"))
     participant = db.relationship('Participant')
 
 class Event(db.Model):
@@ -27,12 +31,11 @@ class Event(db.Model):
     time = db.Column(db.String(10), nullable=False)
     address = db.Column(db.String(30), nullable=False)
     seats = db.Column(db.Integer, nullable=False)
-    participants = db.relationship('Participant')
 
     category_id = db.Column(db.Integer, db.ForeignKey("events_categories.id"))
     category = db.relationship('EventCategory')
 
-    enrollment_id = db.Column(db.Integer, db.ForeignKey("enrollments.id"))
+    #enrollment_id = db.Column(db.Integer, db.ForeignKey("enrollments.id"))
     enrollment = db.relationship('Enrollment')
 
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
@@ -73,11 +76,8 @@ class Participant(db.Model):
     location = db.Column(db.String(50), nullable=False)
     about = db.Column(db.String(500))
 
-    enrollment_id = db.Column(db.Integer, db.ForeignKey("enrollments.id"))
+    #enrollment_id = db.Column(db.Integer, db.ForeignKey("enrollments.id"))
     enrollments = db.relationship('Enrollment')
-
-    event_id = db.Column(db.Integer, db.ForeignKey('events.id'))
-    event = db.relationship('Event')
 
     @property
     def password(self):

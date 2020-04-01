@@ -4,17 +4,18 @@ from marshmallow import Schema, fields
 class EnrollmentSchema(Schema):
     id = fields.Integer(dump_only=True)
     datetime = fields.String()
+    participant = fields.Nested("ParticipantSchema")
+    event = fields.Nested("EventSchema")
 
 class EventSchema(Schema):
     id = fields.Integer(dump_only=True)
-    title = fields.String(required=True)
+    qtitle = fields.String(required=True)
     description  = fields.String(required=True)
     date = fields.String(required=True)
     time = fields.String(required=True)
     address = fields.String()
     seats = fields.Integer()
     category = fields.Nested("EventCategorySchema")
-    enrollment = fields.Nested("EnrollmentSchema")
     location = fields.Nested("LocationSchema")
     type_event = fields.Nested("EventTypeSchema")
 
@@ -40,6 +41,4 @@ class ParticipantSchema(Schema):
     picture = fields.String()
     location = fields.String()
     about = fields.String()
-    enrollments = fields.Nested("EnrollmentSchema")
-    event = fields.Nested("EventSchema")
 
