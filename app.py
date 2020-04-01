@@ -79,6 +79,11 @@ def auth_user():
     else:
         return {'error': 'Wrong password'}, 400
 
+@app.route('/logout/', methods=['POST'])
+def logout_user():
+    session.clear()
+    return jsonify(), 200
+
 @app.route('/profile/', methods=['GET'])
 def get_profile():
     user_id = session.get('user_id', None)
