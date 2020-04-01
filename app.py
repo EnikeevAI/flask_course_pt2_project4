@@ -1,6 +1,6 @@
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from models import db, Enrollment, Event, EventCategory, EventType, Location, Participant 
@@ -63,16 +63,29 @@ def register_user():
         db.session.commit()
     except:
         return jsonify(), 500
-    print(jsonify(new_user_schema.dump(new_user)))
     return jsonify(new_user_schema.dump(new_user)), 201, {'Location': f'/login/{new_user.id}'}
 
 @app.route('/auth/', methods=['POST'])
 def auth_user():
-    return jsonify({"status":"success","key":111111111})
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    user_schema = ParticipantSchema()
+    user = db.session.query(Participant).filter_by(
+        email=email).one_or_none()
+    if user and user.password_valid(password):
+        session['user_id'] = user.id
+        return jsonify(user_schema.dump(user)), 200
+    else:
+        return {'error': 'Wrong password'}, 400
 
 @app.route('/profile/', methods=['GET'])
 def get_profile():
-    return jsonify({"id":1,"picture":"","city":"nsk","about":"", 'enrollments':[]})
+    user_id = session.get('user_id', None)
+    if user_id:
+        user = db.session.query(Participant).get(user_id)
+        user_schema = ParticipantSchema()
+    return jsonify(user_schema.dump(user)), 200
 
 @app.errorhandler(404)
 def page_not_found(error):
